@@ -2,54 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RTD Simulator</title>
+    <title>RTD Full Simulation</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+        h1 { text-align: center; }
+        form { display: flex; flex-direction: column; max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        input, button { margin-bottom: 10px; padding: 8px; font-size: 16px; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        #result { margin-top: 20px; text-align: center; }
+        img { display: block; margin: 30px auto 0; max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 5px; background: white; }
     </style>
 </head>
 <body>
+    <h1>Residence Time Full Simulation</h1>
+    <form id="simulationForm">
+        <input type="number" step="any" id="recharge_value" placeholder="Recharge Value (m/day)" required>
+        <input type="number" step="any" id="drain_conductance" placeholder="Drain Conductance (L^2/T)" required>
+        <input type="number" step="any" id="slope_percent" placeholder="Slope (%)" required>
+        <input type="number" step="any" id="target_mean_hk" placeholder="Target Mean Hydraulic Conductivity (m/day)" required>
+        <input type="number" step="any" id="hk_min" placeholder="Minimum Hydraulic Conductivity (m/day)" required>
+        <input type="number" step="any" id="hk_max" placeholder="Maximum Hydraulic Conductivity (m/day)" required>
+        <input type="number" id="nlay" placeholder="Number of Layers" required>
+        <input type="number" id="top_layers" placeholder="Top Layers" required>
+        <input type="number" id="ncol" placeholder="Number of Columns" required>
+        <input type="number" step="any" id="Lz" placeholder="Depth (m)" required>
+        <input type="number" step="any" id="Lx" placeholder="Length (m)" required>
+        <input type="number" step="any" id="amplitude" placeholder="Amplitude A (m)" required>
+        <input type="number" step="any" id="period" placeholder="Topography Period (m)" required>
+        <input type="number" step="any" id="corr_len_horizontal" placeholder="Correlation Length Horizontal (m)" required>
+        <input type="number" step="any" id="corr_len_vertical" placeholder="Correlation Length Vertical (m)" required>
+        <button type="button" onclick="runFullSimulation()">Run Simulation</button>
+    </form>
 
-    <h1>Residence Time Simulator</h1>
+    <div id="result"></div>
 
-    <select id="topoSelect">
-        <option value="flat">Flat</option>
-        <option value="hill">Hill</option>
-        <option value="valley">Valley</option>
-    </select>
-    <br><br>
-    <button onclick="runSimulation()">Run Simulation</button>
-
-    <h2 id="resultTitle"></h2>
-    <p id="resultText"></p>
+    <img src="Inputparameters.png" alt="Parameter Explanation">
 
     <script>
-        async function runSimulation() {
-            const topoType = document.getElementById('topoSelect').value;
+        async function runFullSimulation() {
+            const payload = {
+                recharge_value: parseFloat(document.getElementById('recharge_value').value),
+                drain_conductance: parseFloat(document.getElementById('drain_conductance').value),
+                slope_percent: parseFloat(document.getElementById('slope_percent').value),
+                target_mean_hk: parseFloat(document.getElementById('target_mean_hk').value),
+                hk_min: parseFloat(document.getElementById('hk_min').value),
+                hk_max: parseFloat(document.getElementById('hk_max').value),
+                nlay: parseInt(document.getElementById('nlay').value),
+                top_layers: parseInt(document.getElementById('top_layers').value),
+                ncol: parseInt(document.getElementById('ncol').value),
+                Lz: parseFloat(document.getElementById('Lz').value),
+                Lx: parseFloat(document.getElementById('Lx').value),
+                amplitude: parseFloat(document.getElementById('amplitude').value),
+                period: parseFloat(document.getElementById('period').value),
+                corr_len_horizontal: parseFloat(document.getElementById('corr_len_horizontal').value),
+                corr_len_vertical: parseFloat(document.getElementById('corr_len_vertical').value)
+            };
 
-            document.getElementById('resultTitle').innerText = "Running simulation... ⏳";
-
-            const response = await fetch('https://rtd-simulator-backend-production.up.railway.app/run_simulation/', {
+            const response = await fetch('https://rtd-simulator-backend-production.up.railway.app/run_full_simulation/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topo_type: topoType })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
-
-            if (data.status === "success") {
-                document.getElementById('resultTitle').innerText = "Simulation Complete! ✅";
-                document.getElementById('resultText').innerHTML = `
-                    Mean Elevation: ${data.mean_elevation} m<br>
-                    Estimated RTD: ${data.fake_rtd_value} units
-                `;
-            } else {
-                document.getElementById('resultTitle').innerText = "Error!";
-                document.getElementById('resultText').innerText = data.error;
-            }
+            document.getElementById('result').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
         }
     </script>
-
 </body>
 </html>
-
